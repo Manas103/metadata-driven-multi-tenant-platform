@@ -1,0 +1,23 @@
+# Production wiring: a real PostgreSQL instance. Tests and the measurement runs never load
+# this file; they use src/test/resources/application.yml, which points at an in-memory H2
+# database in PostgreSQL-compatibility mode instead, because no standalone PostgreSQL
+# instance is reachable in this build environment. See the README's "honest framing" section.
+spring:
+  application:
+    name: metadata-driven-multi-tenant-platform
+  datasource:
+    url: jdbc:postgresql://localhost:5432/metaplatform
+    username: metaplatform_app
+    password: ${METAPLATFORM_DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+logging:
+  level:
+    com.manas.metaplatform: INFO
