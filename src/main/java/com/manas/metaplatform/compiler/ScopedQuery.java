@@ -14,7 +14,7 @@ import java.util.List;
  * {@code PreparedStatement} that does not pass through the rewriter that injects
  * {@code tenant_id = ?}.
  */
-public final class ScopedQuery {
+public final class ScopedQuery implements Scoped {
 
     private final long tenantId;
     private final List<String> selectFields;

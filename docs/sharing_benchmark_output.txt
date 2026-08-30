@@ -1,0 +1,7 @@
+Sharing-visibility adversarial suite: 0 leaks, 0 wrongful denials, across 500 probes (target 0 leaks)
+  category=owner leaks=0 wrongful_denials=0 total=100
+  category=ancestor leaks=0 wrongful_denials=0 total=100
+  category=explicit_share leaks=0 wrongful_denials=0 total=100
+  category=sibling_denied leaks=0 wrongful_denials=0 total=100
+  category=cross_branch_denied leaks=0 wrongful_denials=0 total=100
+Sharing-filter reference-translator diff: 1000 / 1000 generated queries matched exactly (0 mismatched)

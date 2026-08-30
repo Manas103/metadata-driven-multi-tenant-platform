@@ -9,10 +9,12 @@ import com.manas.metaplatform.dsl.ast.Comparison;
 import com.manas.metaplatform.dsl.ast.Expr;
 import com.manas.metaplatform.dsl.ast.Literal;
 import com.manas.metaplatform.dsl.ast.OrExpr;
+import com.manas.metaplatform.dsl.ast.SharingScopeNode;
 import com.manas.metaplatform.dsl.ast.TenantScopeNode;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,12 +22,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Lowers a {@link ScopedQuery} (never a bare {@code ParsedQuery}, see that class's javadoc)
- * to parameterized SQL against the EAV storage schema: {@code records} plus one
+ * Lowers a {@link Scoped} query (never a bare {@code ParsedQuery}, see {@link ScopedQuery}'s
+ * javadoc) to parameterized SQL against the EAV storage schema: {@code records} plus one
  * {@code LEFT JOIN field_values} per distinct field referenced anywhere in the query
- * (SELECT list or WHERE tree). No literal value or tenant id is ever concatenated into the
- * SQL text; everything the query supplies at compile time becomes one {@code ?}
- * placeholder and one entry in {@link CompiledSql#params()}, in the same order.
+ * (SELECT list or WHERE tree). No literal value, tenant id, or sharing-visibility id is ever
+ * concatenated into the SQL text; everything the query supplies at compile time becomes one
+ * {@code ?} placeholder and one entry in {@link CompiledSql#params()}, in the same order.
+ * {@link ScopedQuery} (tenant scoping only) and {@code sharing.SharingScopedQuery} (tenant
+ * scoping plus the record-level sharing filter) both implement {@link Scoped}, so both are
+ * lowered by this exact same code generator; the sharing filter is not a second compiler.
  *
  * <p>Every AND/OR node is emitted as an explicitly parenthesized {@code (left OP right)}
  * around its two already-fully-parenthesized (or atomic) operands. That is a deliberate
@@ -46,7 +51,7 @@ public final class SqlCompiler {
         this.schemaCatalog = schemaCatalog;
     }
 
-    public CompiledSql compile(ScopedQuery query) {
+    public CompiledSql compile(Scoped query) {
         ObjectDefinition objectDefinition = schemaCatalog.resolveObject(query.tenantId(), query.objectName());
 
         Set<String> referencedFields = new LinkedHashSet<>(query.selectFields());
@@ -97,13 +102,16 @@ public final class SqlCompiler {
             collectFieldNames(o.left(), out);
             collectFieldNames(o.right(), out);
         }
-        // TenantScopeNode references no DSL field; nothing to collect.
+        // TenantScopeNode and SharingScopeNode reference no DSL field; nothing to collect.
     }
 
     private String emit(Expr expr, Map<String, FieldJoin> joins, List<Object> params) {
         if (expr instanceof TenantScopeNode t) {
             params.add(t.tenantId());
             return "r.tenant_id = ?";
+        }
+        if (expr instanceof SharingScopeNode s) {
+            return emitSharingScope(s, params);
         }
         if (expr instanceof Comparison c) {
             return emitComparison(c, joins, params);
@@ -119,6 +127,34 @@ public final class SqlCompiler {
             return "(" + left + " OR " + right + ")";
         }
         throw new IllegalStateException("unreachable: unknown Expr node " + expr);
+    }
+
+    /**
+     * Lowers a {@link SharingScopeNode} directly against the physical {@code records} and
+     * {@code record_shares} tables, exactly the way {@code emit} lowers a
+     * {@link TenantScopeNode} directly against {@code records.tenant_id}: never through the
+     * DSL field/join machinery, and never as a subquery string built anywhere but here. A
+     * record is visible if its owner is one of the ids the role-hierarchy resolver already
+     * computed for this viewer, or if an explicit {@code record_shares} row grants the
+     * viewer access to that exact record; the OR of both is what {@code SharingScopeNode}'s
+     * javadoc calls out as the reason it always carries both checks together.
+     */
+    private String emitSharingScope(SharingScopeNode s, List<Object> params) {
+        List<Long> owners = s.visibleOwnerUserIds();
+        String ownerClause;
+        if (owners.isEmpty()) {
+            // No ownership/role-hierarchy visibility at all for this viewer; only an explicit
+            // share grant can make anything visible. "1 = 0" rather than an empty IN(), which
+            // is not legal SQL.
+            ownerClause = "1 = 0";
+        } else {
+            String placeholders = String.join(", ", Collections.nCopies(owners.size(), "?"));
+            ownerClause = "r.owner_user_id IN (" + placeholders + ")";
+            params.addAll(owners);
+        }
+        params.add(s.viewerUserId());
+        return "(" + ownerClause
+                + " OR EXISTS (SELECT 1 FROM record_shares rs WHERE rs.record_id = r.id AND rs.shared_with_user_id = ?))";
     }
 
     private String emitComparison(Comparison c, Map<String, FieldJoin> joins, List<Object> params) {

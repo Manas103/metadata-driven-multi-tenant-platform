@@ -6,13 +6,16 @@ import com.manas.metaplatform.domain.FieldType;
 import com.manas.metaplatform.domain.ObjectDefinition;
 import com.manas.metaplatform.repository.FieldDefinitionRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -128,6 +131,79 @@ public final class ReferenceInterpreter {
             results.add(projected);
         }
         return results;
+    }
+
+    /**
+     * The sharing-filtered variant of {@link #execute}, independent of
+     * {@code sharing.RoleHierarchyResolver} in both direction and data access: instead of
+     * breadth-first descending from the viewer's role to precompute every visible owner
+     * before running the query (the main compiler's approach, baked into the
+     * {@link com.manas.metaplatform.dsl.ast.SharingScopeNode} it emits), this walks upward
+     * from each candidate row's owner's role, one parent hop at a time, checking whether the
+     * viewer's own role is reached. Same predicate, computed the opposite direction, over
+     * data pulled with this class's own {@code JdbcTemplate} queries rather than the
+     * repositories {@code RoleHierarchyResolver} uses.
+     */
+    public List<Map<String, Object>> executeWithSharing(String dsl, long tenantId, long viewerUserId) {
+        List<Map<String, Object>> tenantScopedRows = execute(dsl, tenantId);
+        if (tenantScopedRows.isEmpty()) {
+            return tenantScopedRows;
+        }
+
+        Map<Long, Long> ownerUserIdByRecordId = new LinkedHashMap<>();
+        jdbcTemplate.query("SELECT id, owner_user_id FROM records WHERE tenant_id = ?",
+                rs -> {
+                    long recordId = rs.getLong("id");
+                    long ownerUserId = rs.getLong("owner_user_id");
+                    if (!rs.wasNull()) {
+                        ownerUserIdByRecordId.put(recordId, ownerUserId);
+                    }
+                }, tenantId);
+
+        Map<Long, Long> roleIdByUserId = new LinkedHashMap<>();
+        jdbcTemplate.query("SELECT id, role_id FROM app_users WHERE tenant_id = ?",
+                (RowCallbackHandler) rs -> roleIdByUserId.put(rs.getLong("id"), rs.getLong("role_id")), tenantId);
+
+        Map<Long, Long> parentRoleIdByRoleId = new LinkedHashMap<>();
+        jdbcTemplate.query("SELECT id, parent_role_id FROM roles WHERE tenant_id = ?",
+                rs -> {
+                    long roleId = rs.getLong("id");
+                    long parentRoleId = rs.getLong("parent_role_id");
+                    parentRoleIdByRoleId.put(roleId, rs.wasNull() ? null : parentRoleId);
+                }, tenantId);
+
+        Set<Long> explicitlySharedRecordIds = new LinkedHashSet<>();
+        jdbcTemplate.query("SELECT record_id FROM record_shares WHERE shared_with_user_id = ?",
+                (RowCallbackHandler) rs -> explicitlySharedRecordIds.add(rs.getLong("record_id")), viewerUserId);
+
+        Long viewerRoleId = roleIdByUserId.get(viewerUserId);
+
+        List<Map<String, Object>> visibleRows = new ArrayList<>();
+        for (Map<String, Object> row : tenantScopedRows) {
+            Long recordId = (Long) row.get("record_id");
+            Long ownerUserId = ownerUserIdByRecordId.get(recordId);
+            boolean visible = explicitlySharedRecordIds.contains(recordId)
+                    || (ownerUserId != null && ownerUserId.equals(viewerUserId))
+                    || (ownerUserId != null && viewerRoleId != null
+                    && ownerRoleReportsUpToViewerRole(roleIdByUserId.get(ownerUserId), viewerRoleId, parentRoleIdByRoleId));
+            if (visible) {
+                visibleRows.add(row);
+            }
+        }
+        return visibleRows;
+    }
+
+    private boolean ownerRoleReportsUpToViewerRole(Long ownerRoleId, long viewerRoleId,
+                                                     Map<Long, Long> parentRoleIdByRoleId) {
+        Long current = ownerRoleId;
+        int guard = 0; // cycle guard; the role graph is a tree, but never trust that blindly
+        while (current != null && guard++ < 1000) {
+            if (current == viewerRoleId) {
+                return true;
+            }
+            current = parentRoleIdByRoleId.get(current);
+        }
+        return false;
     }
 
     private List<String> parseFieldList(Cursor cur) {
