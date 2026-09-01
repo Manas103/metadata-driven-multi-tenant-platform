@@ -32,6 +32,10 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
@@ -62,6 +66,41 @@
                 <configuration>
                     <excludedGroups>${surefire.excludedGroups}</excludedGroups>
                 </configuration>
+            </plugin>
+            <plugin>
+                <!-- `mvn exec:java -Dexec.mainClass=com.manas.metaplatform.typesystem.codegen.GenerateClients`
+                     writes the generated Java and TypeScript client source to generated-clients/.
+                     Not bound to a phase: run explicitly after `mvn compile`, before `mvn test`. -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <mainClass>com.manas.metaplatform.typesystem.codegen.GenerateClients</mainClass>
+                    <classpathScope>compile</classpathScope>
+                </configuration>
+            </plugin>
+            <!-- generated-clients/java holds the typesystem compiler's own generated output
+                 (one model class and one client class per declared type). Adding it as a
+                 second source root means those generated .java files are compiled and
+                 exercised by the real test suite, not just emitted as inert text. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-generated-client-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>generated-clients/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

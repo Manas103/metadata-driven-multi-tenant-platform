@@ -1,6 +1,6 @@
-# Metadata-Driven Multi-Tenant Object Platform
+# Metadata-Driven Multi-Tenant Object Platform and Declarative Type Platform
 
-A Spring Boot service where tenants define custom objects and fields as metadata rows instead of database DDL, with a hand-written SOQL-style DSL compiled to parameterized SQL by a real recursive-descent parser and a code generator that injects the tenant predicate, and now a record-level sharing filter, directly into the WHERE clause's abstract syntax tree, structurally, before any SQL text is produced. Java 21, Spring Boot 3.3.4, Spring Data JPA, PostgreSQL (H2 in PostgreSQL-compatibility mode for tests). Every number below was measured on this machine by running the code in this repository, not targeted in advance.
+A Spring Boot service where tenants define custom objects and fields as metadata rows instead of database DDL, with a hand-written SOQL-style DSL compiled to parameterized SQL by a real recursive-descent parser and a code generator that injects the tenant predicate, and a record-level sharing filter, directly into the WHERE clause's abstract syntax tree, structurally, before any SQL text is produced. Extended with a second, sibling subsystem: a declarative type platform where an entity is declared once, in its own small DSL, and a compiler emits the PostgreSQL DDL, a generic REST surface, and typed Java and TypeScript client SDKs from that one declaration. Java 21, Spring Boot 3.3.4, Spring Data JPA, PostgreSQL (H2 in PostgreSQL-compatibility mode for tests), TypeScript/Node for the generated TypeScript client. Every number below was measured on this machine by running the code in this repository, not targeted in advance.
 
 ## Why this exists
 
@@ -14,6 +14,9 @@ Metadata-driven multi-tenancy over a relational substrate, where adding a "colum
 - **The data is entirely synthetic.** `DataSeeder` builds a deterministic, seeded dataset of 6 fictional tenants (Acme, Globex, Initech, Umbrella, Stark, Wayne), each declaring the same three shared object names (`Contact`, `Deal`, `Task`, deliberately colliding across tenants at the metadata level) plus one object exclusive to itself, populated with synthetic field values at an 85% presence rate so the EAV storage's sparse rows and `LEFT JOIN`/`NULL` semantics are actually exercised, not just the happy path. `SharingDataSeeder` builds a second, entirely separate synthetic dataset for the sharing filter: one fictional company ("SharingCo") with a four-level, eleven-role hierarchy (CEO over a VP of Sales and a VP of Support, each over one manager, each over five reps), 200 `Opportunity` records owned one-per-rep-tier, and 40 explicit `record_shares` grants crossing the Sales/Support branch boundary. Neither seeder touches the other's tenants, objects, or `Random` sequence. There is no real customer, tenant, or company behind any of it.
 - **Tests and the measurement runs use H2 in PostgreSQL-compatibility mode** (`MODE=PostgreSQL`), not real PostgreSQL: `src/main/resources/application.yml` is the real production profile (real PostgreSQL, `ddl-auto: validate`); `src/test/resources/application.yml` is the only place H2 is configured, and no real PostgreSQL instance was reachable in the environment this project was built in.
 - **Machine and toolchain.** 8 physical / 16 logical cores, Windows 11 Home. JDK 21 (Temurin), Maven 3.9.9, Spring Boot 3.3.4, Spring Data JPA, H2 2.x, PostgreSQL JDBC driver (runtime only, unused by any test in this repository).
+- **The type platform is a separate subsystem from the SOQL-style DSL above, sharing only `domain.FieldType`.** The SOQL DSL queries data already stored in the EAV schema; the type platform declares new entity types from scratch, each backed by its own real table. Neither subsystem's tenant/sharing model applies to the other; the type platform has no tenant concept at all, on purpose, to keep the two subsystems' scopes honest and non-overlapping.
+- **The 40 declared types are a synthetic operations/business-object catalog** (Asset, Sensor, WorkOrder, Invoice, Employee, and so on; the full list is `src/main/resources/typesystem/declared-types.dsl`), not connected to the SOQL DSL's tenants.
+- **The generated TypeScript client is run with Node's experimental type-stripping** (`node --experimental-strip-types`), not compiled by `tsc` first; this is a deliberate choice to keep the differential benchmark to one toolchain per side (`javac`/`java` for Java, `node` for TypeScript) rather than adding a separate compile step whose failure mode would be invisible to `mvn test`.
 
 ## Architecture
 
@@ -87,9 +90,40 @@ Note on `dsl/ast/Expr.java`: the `TenantScopeNode` entry above the tree listing 
 
 **Why the sharing predicate is computed downward from the viewer, then checked upward from the owner.** `RoleHierarchyResolver.visibleOwnerUserIds` walks the role tree breadth-first *downward* from the viewer's own role (a manager's visible set includes every descendant role, so a manager sees a subordinate's records but a peer or an unrelated branch does not) and hands the resulting owner-id list to `SharingScopingRewriter`, which lowers it to `r.owner_user_id IN (...) OR EXISTS (record_shares ...)` directly against the physical columns, the same way `TenantScopeNode` lowers directly against `r.tenant_id`. `ReferenceInterpreter.executeWithSharing` computes the identical predicate the opposite direction, walking *upward* from each candidate row's owner's role one parent hop at a time to see whether the viewer's role is reached, over data pulled by its own `JdbcTemplate` queries that share no code with `RoleHierarchyResolver` or its repositories. Two implementations computing the same set from opposite directions, over independently-queried data, is why a diff between them means something.
 
+## The type platform
+
+```
+src/main/java/com/manas/metaplatform/typesystem/
+  dsl/            TypeLexer, TypeParser, TypeDecl, FieldDecl: a small hand-written parser for
+                   "type Name { field: TYPE ... }" declarations, sibling to the SOQL DSL's own
+                   lexer/parser but a separate grammar for a separate purpose
+  compiler/        TypePlatformCompiler (front door), DdlEmitter (CREATE TABLE per type),
+                   JavaClientEmitter / TypeScriptClientEmitter (one model + client class per type)
+  client/          GeneratedTypeClient (the uniform interface all 40 generated clients implement),
+                   TypeClientSupport (the one hand-written HTTP+JSON helper every generated Java
+                   client calls into)
+  web/             TypeSystemBootstrap (runs the DDL at context startup, registers types),
+                   TypeRegistry, GenericTypeController (the one REST surface all 40 types share)
+  codegen/         GenerateClients: writes the emitted Java and TypeScript source to generated-clients/
+src/main/resources/typesystem/declared-types.dsl   the single declaration point: 40 types
+generated-clients/java/.../generated/{model,client}/    40 generated Java model + client pairs
+generated-clients/typescript/{model,client}/            40 generated TypeScript model + client pairs
+generated-clients/typescript/index.ts                   buildClients(): the TS-side client registry
+generated-clients/typescript/runtime/                   hand-written HTTP helper + the differential
+                                                          benchmark's TypeScript-side query runner
+src/test/java/com/manas/metaplatform/typesystem/
+  TypeSystemIntegrationTest.java     always-on: 40 types registered, one Java client round-trip
+  TypePlatformClientLoader.java      reflectively loads any of the 40 generated Java clients by name
+  TypePlatformBenchmarkRunner.java   tagged benchmark: the 2,000-query differential run
+```
+
+**Why one generic REST controller instead of 40 generated controllers.** `GenericTypeController` dispatches on the `typeName` path variable at request time against `TypeRegistry`, rather than 40 hand-generated `@RestController` classes. This is the same tradeoff most real ORM-backed admin APIs make: the server side does not need to be "typed" to be correct, because `TypeRegistry` and the declared DDL already guarantee every table matches its declaration; typed-ness is what the *client* side needs, because that is the code an application author actually writes against and where a typo in a field name should be a compile error.
+
+**Why the differential benchmark loads all 40 Java clients reflectively instead of 40 import statements.** Every generated `<Type>Client` shares the same `(String baseUrl)` constructor and implements `GeneratedTypeClient`, so `TypePlatformClientLoader.load(typeName, baseUrl)` (`Class.forName(...).getConstructor(String.class).newInstance(baseUrl)`) drives all 40 uniformly. The generated TypeScript side does the equivalent with an explicit, generated `index.ts` registry (`buildClients()`) instead of reflection, because that is the idiomatic way to do it in TypeScript; both approaches exist for the same reason, a test harness that must drive 40 generated clients cannot have 40 hand-written call sites without the import list going stale the next time the DSL gains a type.
+
 ## Validation
 
-Default test run (parser, AST invariants, integration wiring, both tenant-only and sharing), 32 tests, all passing (`docs/test_output.txt`):
+Default test run (parser, AST invariants, integration wiring, both tenant-only and sharing, plus the type platform's wiring check), 34 tests, all passing (`docs/test_output.txt`):
 
 ```
 Tests run: 7, Failures: 0, Errors: 0, Skipped: 0 -- AstInvariantsTest
@@ -97,7 +131,8 @@ Tests run: 10, Failures: 0, Errors: 0, Skipped: 0 -- ParserTest
 Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- PlatformIntegrationTest
 Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- SharingIntegrationTest
 Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- SharingAstInvariantsTest
-Tests run: 32, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- TypeSystemIntegrationTest
+Tests run: 34, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
@@ -107,13 +142,15 @@ BUILD SUCCESS
 
 `PlatformIntegrationTest` seeds the real dataset through the real Spring context against H2, then checks that the compiler and the reference interpreter agree on a live query, that two tenants' identically-named `Contact` objects never share a row, that querying another tenant's exclusive object name is rejected with `UnknownObjectException`, and that the compiled SQL text never contains the tenant id as a standalone numeric token (a word-boundary check, since column aliases like `fv1` can coincidentally contain the same digits). `SharingIntegrationTest` is the sharing-filter equivalent: an owner sees their own record, the CEO sees a sales rep's record through the role hierarchy, an unrelated peer rep sees nothing with no grant, an explicit grantee outside ownership and the hierarchy sees the one record it was granted, and the compiled SQL for a sharing-scoped query names both `r.tenant_id = ?` and the sharing predicate (`r.owner_user_id IN`, `record_shares`).
 
-`BenchmarkRunner` and `SharingBenchmarkRunner` (both tagged `benchmark`, excluded from the default run) are the scale measurements behind the resume claims; see "Measured results" below for their output.
+`TypeSystemIntegrationTest` confirms the DSL parses to exactly 40 registered types (the context fails to start otherwise, since `TypeSystemBootstrap` runs the DDL for each one at startup) and that one generated Java client can create and read back a real record through the generic REST surface. `BenchmarkRunner`, `SharingBenchmarkRunner`, and `TypePlatformBenchmarkRunner` (all tagged `benchmark`, excluded from the default run) are the scale measurements behind the resume claims; see "Measured results" below for their output.
 
 ## Findings
 
 The first version of the tenant-scoped "compiled SQL never contains the tenant id" test used a bare substring check (`doesNotContain(String.valueOf(tenantId))`) and failed on the very first run, not because of a tenant-scoping bug but because the compiler's own generated column alias for the first joined field, `fv1`, coincidentally contains the digit `1`, which was also the seeded tenant id under test. The measurement that discriminated a real leak from a coincidental digit collision was switching to a word-boundary regex (`(?<![A-Za-z0-9_])1(?![0-9])`) that only matches a standalone numeric token, plus a positive check that `r.tenant_id = ?` (the placeholder form) is present in the SQL text. This is exactly the kind of thing a real measurement is supposed to catch: the first assertion was too strong in the wrong way, and weakening it precisely (rather than deleting it) is what makes the surviving assertion still mean something.
 
 Building the sharing filter's reference oracle, `ReferenceInterpreter.executeWithSharing` initially failed to compile with `reference to query is ambiguous`, on two of its four `JdbcTemplate.query(...)` calls. The compiler could not decide between `JdbcTemplate`'s `ResultSetExtractor` overload and its `RowCallbackHandler` overload for a lambda whose body was a single expression statement (`rs -> map.put(rs.getLong("id"), rs.getLong("role_id"))`); the other two calls in the same method, written as an explicit `{ ... }` block with no return value, resolved without ambiguity. The fix was to cast the two ambiguous lambdas to `RowCallbackHandler` explicitly, which is a real, if minor, lesson about `JdbcTemplate`'s overload set rather than a logic bug: it was caught at compile time, before any measurement ran, so it never had a chance to produce a wrong number.
+
+The first run of the type platform's differential benchmark reported 0/2,000 matched, with the printed mismatch sample showing the two sides' result maps looking identical field by field. The comparison itself was the bug, not the two clients: Jackson can hand back an `Integer` from one deserialization path and a `Double` from another for the identical JSON number, and the original diff used plain `Object.equals`, which treats `5` and `5.0` as unequal. The fix was a small recursive comparator that treats any two `Number`s as equal by value; after that fix the run reported 2,000/2,000 on the first honest attempt, which is recorded as-is below rather than re-run to look less convenient, since nothing about the fix changed what was actually being measured, only how two representations of the same number were compared.
 
 ## Measured results
 
@@ -127,8 +164,12 @@ Tenant-isolation dataset: 6 synthetic tenants, 3 shared object names per tenant 
 | **Reference-translator diff (tenant only)** | **2,000 / 2,000 generated queries matched the independent reference interpreter exactly**, row for row, field for field, re-verified after the sharing filter was added | 2,000 generated queries matched an independent reference translator exactly | yes |
 | **Sharing-visibility adversarial suite** | **0 leaks, 0 wrongful denials, across 500 probes** (100 each of owner, role-hierarchy ancestor, explicit share, same-tier peer denial, cross-branch denial) | tenant predicate and a record-level sharing filter injected into the syntax tree, verified against an adversarial probe suite | yes |
 | **Sharing-filter reference-translator diff** | **1,000 / 1,000 generated sharing-scoped queries matched the independent reference interpreter exactly** | compiler lowers the DSL and the sharing filter to SQL correctly, checked against an independent second implementation | yes |
+| **Declared types** | **40** types declared in `declared-types.dsl` and registered by `TypeSystemBootstrap` at startup | 40 declared types | yes |
+| **Cross-client differential (type platform)** | **2,000 / 2,000 generated queries matched** between the generated Java client (in-process) and the generated TypeScript client (`node --experimental-strip-types`), both against the same live server and database | the two generated clients returned identical results on 2,000 generated queries | yes |
 
-All four figures are counted, not sampled: every probe and generated query in the runs that produced `docs/benchmark_output.txt` and `docs/sharing_benchmark_output.txt` is included in the totals above. The tenant-isolation "foreign row" check looks up each returned row's true `tenant_id` directly against the `records` table, independent of whatever the query claimed to be scoped to. The sharing-visibility check computes `expectedVisible` independently, from the seeded ownership/role-hierarchy/explicit-share data, for every probe before the query ever runs, so a leak or a wrongful denial shows up as a nonzero count rather than needing to be spotted by eye. Both reference-translator diffs compare full result rows (record id, every selected field's value), not just row counts or SQL text.
+Type platform run: `mvn test -Dtest=TypePlatformBenchmarkRunner -Dsurefire.excludedGroups=` (raw output in `docs/typeplatform_benchmark_output.txt`). 400 records seeded (10 per type across the 40 declared types), then 2,000 queries generated uniformly at random (a GET-by-id or a full LIST per query) and run through both clients against the same running server.
+
+All six figures above are counted, not sampled: every probe and generated query in the runs that produced `docs/benchmark_output.txt` and `docs/sharing_benchmark_output.txt` is included in the totals above. The tenant-isolation "foreign row" check looks up each returned row's true `tenant_id` directly against the `records` table, independent of whatever the query claimed to be scoped to. The sharing-visibility check computes `expectedVisible` independently, from the seeded ownership/role-hierarchy/explicit-share data, for every probe before the query ever runs, so a leak or a wrongful denial shows up as a nonzero count rather than needing to be spotted by eye. Both reference-translator diffs compare full result rows (record id, every selected field's value), not just row counts or SQL text.
 
 What this does not measure: query performance or planner behavior (out of scope, see "Honest framing"), concurrent multi-tenant load (the measurement runs are single-threaded), correctness against a real PostgreSQL instance rather than H2 in compatibility mode, and sharing rules keyed on record criteria rather than ownership, hierarchy or explicit grant (see "Limitations").
 
@@ -136,9 +177,10 @@ What this does not measure: query performance or planner behavior (out of scope,
 
 ```
 export PATH="/c/Users/Manas/tools/apache-maven-3.9.9/bin:$PATH"   # or the equivalent mvn on PATH
-mvn test                                                       # 32 tests, H2 in-memory
+mvn test                                                          # 34 tests, H2 in-memory
 mvn test -Dtest=BenchmarkRunner -Dsurefire.excludedGroups=        # the 2,000-query / 500-probe tenant-isolation run
 mvn test -Dtest=SharingBenchmarkRunner -Dsurefire.excludedGroups= # the 1,000-query / 500-probe sharing-filter run
+mvn test -Dtest=TypePlatformBenchmarkRunner -Dsurefire.excludedGroups= # the type platform's 2,000-query Java/TS differential (needs node on PATH)
 ```
 
 Against a real PostgreSQL instance (not exercised for any number in this README):
@@ -158,3 +200,5 @@ This is the first repository in the portfolio with a tenancy model or a query co
 No real PostgreSQL instance was exercised for any number in this README; every measured figure comes from the H2-in-PostgreSQL-compatibility-mode test path. The DSL supports a single flat table's worth of fields per object (no relationships or joins between custom objects), six comparison operators, and no aggregate functions (`COUNT`, `SUM`, etc.), all deliberately out of scope for a small version of the idea. Concurrency correctness under simultaneous writers is whatever Spring Data JPA and the underlying database already provide; nothing in this project adds tenant-aware locking or isolation beyond that. The adversarial suite covers cross-tenant literal collisions and parameterization-breaking string literals; it does not include a fuzzer or a formal proof, so it is evidence of correctness at the scale measured (500 probes), not a guarantee for every possible adversarial input.
 
 The record-level sharing filter covers three visibility paths (ownership, role-hierarchy descent, explicit per-record grant) and no others: no criteria-based sharing rules, no public groups, no manual-share reason codes, and no write-time enforcement (`executeWithSharing` is a read path; nothing in this project checks a write against the sharing model). `RoleHierarchyResolver` recomputes the visible owner-id set from the full role/user table on every call rather than caching it, which is a real, disclosed cost at the scale a production sharing engine would need to handle (thousands of roles), not measured here because the seeded hierarchy (11 roles) is far too small for that cost to show up. The sharing adversarial suite, like the tenant one, is evidence at the scale measured (500 probes across 5 categories), not a formal proof.
+
+The type platform's DSL supports the same three field types the SOQL DSL's EAV storage does (STRING/NUMBER/BOOLEAN); no relationships between declared types, no server-side validation beyond what the column type enforces, and tables are dropped and recreated on every application startup (a test-friendly choice, not a migration strategy, see `TypeSystemBootstrap`). The differential benchmark seeds 10 records per type (400 total) and issues GET-by-id and unfiltered LIST queries; it does not exercise equality-filtered LIST queries, so it is evidence about the generated clients agreeing on record shape and content, not about every possible query the REST surface accepts. The generated TypeScript client depends on Node's `--experimental-strip-types` flag, which Node itself documents as experimental and subject to change.

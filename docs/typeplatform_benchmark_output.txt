@@ -1,0 +1,9 @@
+Type platform differential benchmark
+Declared types: 40
+Seeded records: 400 (10 per type across 40 types)
+node runtime output:
+(node:14300) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ran 2000 queries through the generated TypeScript clients
+
+Result: 2000/2000 generated queries matched between the generated Java and TypeScript clients

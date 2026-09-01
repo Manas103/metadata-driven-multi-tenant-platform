@@ -1,15 +1,121 @@
-﻿
-[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.055 s -- in 
-com.manas.metaplatform.compiler.AstInvariantsTest
-[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.034 s -- in 
-com.manas.metaplatform.dsl.ParserTest
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.394 s -- in 
-com.manas.metaplatform.integration.PlatformIntegrationTest
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.253 s -- in 
-com.manas.metaplatform.integration.SharingIntegrationTest
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in 
-com.manas.metaplatform.sharing.SharingAstInvariantsTest
-[INFO] Tests run: 32, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------< com.manas:metadata-driven-multi-tenant-platform >-----------
+[INFO] Building metadata-driven-multi-tenant-platform 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- build-helper:3.6.0:add-source (add-generated-client-source) @ metadata-driven-multi-tenant-platform ---
+[INFO] Source directory: C:\Users\Manas\Downloads\Total Job Application process flow\projects\metadata-driven-multi-tenant-platform\generated-clients\java added.
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ metadata-driven-multi-tenant-platform ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ metadata-driven-multi-tenant-platform ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ metadata-driven-multi-tenant-platform ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ metadata-driven-multi-tenant-platform ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ metadata-driven-multi-tenant-platform ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.manas.metaplatform.compiler.AstInvariantsTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.069 s -- in com.manas.metaplatform.compiler.AstInvariantsTest
+[INFO] Running com.manas.metaplatform.dsl.ParserTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.033 s -- in com.manas.metaplatform.dsl.ParserTest
+[INFO] Running com.manas.metaplatform.integration.PlatformIntegrationTest
+20:01:34.299 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.manas.metaplatform.integration.PlatformIntegrationTest]: PlatformIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+20:01:34.371 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.manas.metaplatform.MetaPlatformApplication for test class com.manas.metaplatform.integration.PlatformIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-08-31T20:01:34.627-04:00  INFO 6096 --- [           main] c.m.m.i.PlatformIntegrationTest          : Starting PlatformIntegrationTest using Java 21.0.11 with PID 6096 (started by Manas in C:\Users\Manas\Downloads\Total Job Application process flow\projects\metadata-driven-multi-tenant-platform)
+2026-08-31T20:01:34.629-04:00  INFO 6096 --- [           main] c.m.m.i.PlatformIntegrationTest          : No active profile set, falling back to 1 default profile: "default"
+2026-08-31T20:01:35.098-04:00  INFO 6096 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-31T20:01:35.161-04:00  INFO 6096 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 56 ms. Found 8 JPA repository interfaces.
+2026-08-31T20:01:35.526-04:00  INFO 6096 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-31T20:01:35.593-04:00  INFO 6096 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2026-08-31T20:01:35.616-04:00  INFO 6096 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-08-31T20:01:35.841-04:00  INFO 6096 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-31T20:01:35.878-04:00  INFO 6096 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-08-31T20:01:35.988-04:00  INFO 6096 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:metaplatform user=SA
+2026-08-31T20:01:35.990-04:00  INFO 6096 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-08-31T20:01:36.009-04:00  WARN 6096 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-31T20:01:36.518-04:00  INFO 6096 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-31T20:01:36.543-04:00  INFO 6096 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-31T20:01:37.242-04:00  INFO 6096 --- [           main] c.m.m.i.PlatformIntegrationTest          : Started PlatformIntegrationTest in 2.791 seconds (process running for 3.519)
+WARNING: A Java agent has been loaded dynamically (C:\Users\Manas\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.19\byte-buddy-agent-1.14.19.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.740 s -- in com.manas.metaplatform.integration.PlatformIntegrationTest
+[INFO] Running com.manas.metaplatform.integration.SharingIntegrationTest
+2026-08-31T20:01:38.940-04:00  INFO 6096 --- [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.manas.metaplatform.integration.SharingIntegrationTest]: SharingIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-08-31T20:01:38.941-04:00  INFO 6096 --- [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.manas.metaplatform.MetaPlatformApplication for test class com.manas.metaplatform.integration.SharingIntegrationTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.226 s -- in com.manas.metaplatform.integration.SharingIntegrationTest
+[INFO] Running com.manas.metaplatform.sharing.SharingAstInvariantsTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.manas.metaplatform.sharing.SharingAstInvariantsTest
+[INFO] Running com.manas.metaplatform.typesystem.TypeSystemIntegrationTest
+2026-08-31T20:01:39.174-04:00  INFO 6096 --- [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.manas.metaplatform.typesystem.TypeSystemIntegrationTest]: TypeSystemIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-08-31T20:01:39.182-04:00  INFO 6096 --- [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.manas.metaplatform.MetaPlatformApplication for test class com.manas.metaplatform.typesystem.TypeSystemIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2026-08-31T20:01:39.208-04:00  INFO 6096 --- [           main] c.m.m.t.TypeSystemIntegrationTest        : Starting TypeSystemIntegrationTest using Java 21.0.11 with PID 6096 (started by Manas in C:\Users\Manas\Downloads\Total Job Application process flow\projects\metadata-driven-multi-tenant-platform)
+2026-08-31T20:01:39.208-04:00  INFO 6096 --- [           main] c.m.m.t.TypeSystemIntegrationTest        : No active profile set, falling back to 1 default profile: "default"
+2026-08-31T20:01:39.339-04:00  INFO 6096 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-31T20:01:39.355-04:00  INFO 6096 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 15 ms. Found 8 JPA repository interfaces.
+2026-08-31T20:01:39.580-04:00  INFO 6096 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 0 (http)
+2026-08-31T20:01:39.602-04:00  INFO 6096 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-08-31T20:01:39.602-04:00  INFO 6096 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.30]
+2026-08-31T20:01:39.648-04:00  INFO 6096 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-08-31T20:01:39.648-04:00  INFO 6096 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 440 ms
+2026-08-31T20:01:39.700-04:00  INFO 6096 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-31T20:01:39.701-04:00  INFO 6096 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-08-31T20:01:39.706-04:00  INFO 6096 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-31T20:01:39.707-04:00  INFO 6096 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-08-31T20:01:39.709-04:00  INFO 6096 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:metaplatform user=SA
+2026-08-31T20:01:39.709-04:00  INFO 6096 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-08-31T20:01:39.709-04:00  WARN 6096 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-31T20:01:39.771-04:00  INFO 6096 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-31T20:01:39.778-04:00  INFO 6096 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-31T20:01:39.920-04:00  INFO 6096 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 61100 (http) with context path '/'
+2026-08-31T20:01:39.922-04:00  INFO 6096 --- [           main] c.m.m.t.TypeSystemIntegrationTest        : Started TypeSystemIntegrationTest in 0.737 seconds (process running for 6.199)
+2026-08-31T20:01:40.205-04:00  INFO 6096 --- [o-auto-1-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-31T20:01:40.205-04:00  INFO 6096 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-08-31T20:01:40.207-04:00  INFO 6096 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.100 s -- in com.manas.metaplatform.typesystem.TypeSystemIntegrationTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 34, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
-
-
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.173 s
+[INFO] Finished at: 2026-08-31T20:01:40-04:00
+[INFO] ------------------------------------------------------------------------
