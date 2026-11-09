@@ -1,0 +1,10 @@
+
+ RUN  v2.1.9 C:/Users/Manas/Downloads/Auto Job Applier/Total Job Application process flow/projects/metadata-driven-multi-tenant-platform/web
+
+ ✓ tests/App.test.tsx (3 tests) 37ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  01:18:01
+   Duration  1.28s (transform 48ms, setup 140ms, collect 113ms, tests 37ms, environment 718ms, prepare 107ms)
+

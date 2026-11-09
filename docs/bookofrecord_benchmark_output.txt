@@ -1,0 +1,9 @@
+Seeded 250000 ledger rows across 500 accounts, 25000 corrected facts
+Seed time: 901ms
+
+Fast-path current-version query: 642ms
+Independent oracle recomputation: 195ms
+
+Per-row current/superseded verdict: 250000 / 250000 matched (target: all 250,000)
+
+Account/symbol position aggregates: 5000 / 5000 matched

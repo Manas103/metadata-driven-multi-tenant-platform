@@ -1,0 +1,100 @@
+[ {
+  "factId" : "fact-console-1",
+  "accountId" : 1,
+  "symbol" : "NVDA",
+  "effectiveDate" : "2026-07-14",
+  "priorAsOfFrom" : "2026-07-15T00:00:00Z",
+  "restatedAsOfFrom" : "2026-08-02T00:00:00Z",
+  "fields" : [ {
+    "fieldName" : "quantity",
+    "priorValue" : "240.000000",
+    "restatedValue" : "260.000000",
+    "changed" : true
+  }, {
+    "fieldName" : "costBasis",
+    "priorValue" : "36000.000000",
+    "restatedValue" : "39000.000000",
+    "changed" : true
+  }, {
+    "fieldName" : "realizedPnl",
+    "priorValue" : "0.000000",
+    "restatedValue" : "1500.000000",
+    "changed" : true
+  }, {
+    "fieldName" : "effectiveDate",
+    "priorValue" : "2026-07-14",
+    "restatedValue" : "2026-07-14",
+    "changed" : false
+  }, {
+    "fieldName" : "entryType",
+    "priorValue" : "TRADE",
+    "restatedValue" : "TRADE",
+    "changed" : false
+  } ]
+}, {
+  "factId" : "fact-console-2",
+  "accountId" : 1,
+  "symbol" : "JPM",
+  "effectiveDate" : "2026-05-03",
+  "priorAsOfFrom" : "2026-05-04T00:00:00Z",
+  "restatedAsOfFrom" : "2026-06-20T00:00:00Z",
+  "fields" : [ {
+    "fieldName" : "quantity",
+    "priorValue" : "500.000000",
+    "restatedValue" : "480.000000",
+    "changed" : true
+  }, {
+    "fieldName" : "costBasis",
+    "priorValue" : "75000.000000",
+    "restatedValue" : "72000.000000",
+    "changed" : true
+  }, {
+    "fieldName" : "realizedPnl",
+    "priorValue" : "2000.000000",
+    "restatedValue" : "1700.000000",
+    "changed" : true
+  }, {
+    "fieldName" : "effectiveDate",
+    "priorValue" : "2026-05-03",
+    "restatedValue" : "2026-05-03",
+    "changed" : false
+  }, {
+    "fieldName" : "entryType",
+    "priorValue" : "TRADE",
+    "restatedValue" : "TRADE",
+    "changed" : false
+  } ]
+}, {
+  "factId" : "fact-console-3",
+  "accountId" : 1,
+  "symbol" : "XOM",
+  "effectiveDate" : "2026-09-01",
+  "priorAsOfFrom" : "2026-09-02T00:00:00Z",
+  "restatedAsOfFrom" : "2026-09-25T00:00:00Z",
+  "fields" : [ {
+    "fieldName" : "quantity",
+    "priorValue" : "1000.000000",
+    "restatedValue" : "1000.000000",
+    "changed" : false
+  }, {
+    "fieldName" : "costBasis",
+    "priorValue" : "90000.000000",
+    "restatedValue" : "90000.000000",
+    "changed" : false
+  }, {
+    "fieldName" : "realizedPnl",
+    "priorValue" : "-500.000000",
+    "restatedValue" : "-500.000000",
+    "changed" : false
+  }, {
+    "fieldName" : "effectiveDate",
+    "priorValue" : "2026-09-01",
+    "restatedValue" : "2026-09-01",
+    "changed" : false
+  }, {
+    "fieldName" : "entryType",
+    "priorValue" : "TRADE",
+    "restatedValue" : "TRADE",
+    "changed" : false
+  } ]
+} ]
