@@ -3,3 +3,11 @@ target/
 .idea/
 *.iml
 .vscode/
+web/node_modules/
+web/dist/
+*.tsbuildinfo
+src/main/resources/static/
+results/
+.terraform/
+.terraform.lock.hcl
+*.tfstate*

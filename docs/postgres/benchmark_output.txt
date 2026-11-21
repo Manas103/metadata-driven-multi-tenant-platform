@@ -1,0 +1,2 @@
+Reference-translator diff: 2000 / 2000 generated queries matched exactly (0 mismatched)
+Adversarial cross-tenant suite: 0 foreign rows across 500 probes (target 0)

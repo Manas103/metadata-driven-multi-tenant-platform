@@ -25,4 +25,20 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> 
 
     @Query("select count(e) from LedgerEntry e")
     long countAll();
+
+    @Query("select distinct e.factId from LedgerEntry e where e.accountId = :accountId and e.version > 1 order by e.factId")
+    List<String> restatedFactIds(Long accountId);
+
+    /**
+     * Bitemporal read: the account's entries effective on or before {@code asOfDate}, as the
+     * system believed them at {@code believedAt} (the version whose transaction-time window
+     * [asOfFrom, asOfTo) contains that instant), so a past answer stays reproducible after
+     * later corrections.
+     */
+    @Query("""
+            select e from LedgerEntry e
+            where e.accountId = :accountId and e.effectiveDate <= :asOfDate
+              and e.asOfFrom <= :believedAt and (e.asOfTo is null or e.asOfTo > :believedAt)
+            order by e.factId""")
+    List<LedgerEntry> believedAt(Long accountId, java.time.LocalDate asOfDate, java.time.Instant believedAt);
 }

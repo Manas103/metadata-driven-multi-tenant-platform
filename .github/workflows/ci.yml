@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    # the whole suite twice: on H2, then on a real PostgreSQL 16 (Testcontainers), where
+    # ProductionSchemaTest also runs the Flyway migration and Hibernate's validate step
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: tests on H2
+        run: mvn -B -q test
+      - name: tests on PostgreSQL 16
+        run: mvn -B -q test -Dspring.profiles.active=pg
+
+  web:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  container:
+    # the production image against PostgreSQL via docker compose: migration, demo data,
+    # the console's static files and the API, checked from outside the container
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: start
+        run: docker compose up -d --build
+      - name: wait for the service and its demo data
+        run: |
+          for i in $(seq 1 60); do
+            n=$(curl -fsS localhost:8080/api/admin/tenants 2>/dev/null | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' || echo 0)
+            [ "$n" -ge 8 ] && exit 0
+            sleep 5
+          done
+          docker compose logs app | tail -50
+          exit 1
+      - name: console is served
+        run: curl -fsS localhost:8080/ | grep -q '<div id="root">'
+      - name: end-to-end checks
+        run: python3 scripts/remote_check.py http://localhost:8080 200
+      - if: always()
+        run: docker compose logs app | grep -E "Flyway|Migrating|Successfully applied|demo data|Started|ERROR" || true
+
+  terraform:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+      - working-directory: deploy/aws
+        run: |
+          terraform fmt -check
+          terraform init -backend=false -input=false
+          terraform validate

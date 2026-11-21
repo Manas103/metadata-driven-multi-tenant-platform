@@ -1,11 +1,12 @@
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.639 s -- in com.manas.metaplatform.bookofrecord.integration.BookOfRecordIntegrationTest
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.095 s -- in com.manas.metaplatform.bookofrecord.restatement.RestatementWriterTest
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.054 s -- in com.manas.metaplatform.bookofrecord.web.ConsoleFixtureExporterTest
-[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.manas.metaplatform.compiler.AstInvariantsTest
-[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in com.manas.metaplatform.dsl.ParserTest
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.248 s -- in com.manas.metaplatform.integration.PlatformIntegrationTest
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.156 s -- in com.manas.metaplatform.integration.SharingIntegrationTest
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.manas.metaplatform.sharing.SharingAstInvariantsTest
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.906 s -- in com.manas.metaplatform.typesystem.TypeSystemIntegrationTest
-[INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
-[INFO] BUILD SUCCESS
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.232 s -- in com.manas.metaplatform.admin.AdminApiTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0 s -- in com.manas.metaplatform.admin.ProductionSchemaTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.238 s -- in com.manas.metaplatform.bookofrecord.integration.BookOfRecordIntegrationTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.046 s -- in com.manas.metaplatform.bookofrecord.restatement.RestatementWriterTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.055 s -- in com.manas.metaplatform.bookofrecord.web.ConsoleFixtureExporterTest
+Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.manas.metaplatform.compiler.AstInvariantsTest
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.manas.metaplatform.dsl.ParserTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.218 s -- in com.manas.metaplatform.integration.PlatformIntegrationTest
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.251 s -- in com.manas.metaplatform.integration.SharingIntegrationTest
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.054 s -- in com.manas.metaplatform.sharing.SharingAstInvariantsTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.167 s -- in com.manas.metaplatform.typesystem.TypeSystemIntegrationTest
+43 run, 0 failures, 0 errors, 1 skipped (ProductionSchemaTest runs only on PostgreSQL)

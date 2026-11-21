@@ -1,0 +1,5 @@
+2026-11-21T17:34:39.845Z  INFO 1 --- [metadata-driven-multi-tenant-platform] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://db:5432/metaplatform (PostgreSQL 1
+2026-11-21T17:34:39.938Z  INFO 1 --- [metadata-driven-multi-tenant-platform] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - schema"
+2026-11-21T17:34:40.052Z  INFO 1 --- [metadata-driven-multi-tenant-platform] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 1 migration to schema "public", now at ve
+2026-11-21T17:34:42.334Z  INFO 1 --- [metadata-driven-multi-tenant-platform] [           main] c.m.m.MetaPlatformApplication            : Started MetaPlatformApplication in 4.365 seconds (process runn
+2026-11-21T17:34:54.650Z  INFO 1 --- [metadata-driven-multi-tenant-platform] [           main] c.m.metaplatform.admin.DemoDataLoader    : demo data: seeded in 12217 ms

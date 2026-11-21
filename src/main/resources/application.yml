@@ -1,7 +1,7 @@
-# Production wiring: a real PostgreSQL instance. Tests and the measurement runs never load
-# this file; they use src/test/resources/application.yml, which points at an in-memory H2
-# database in PostgreSQL-compatibility mode instead, because no standalone PostgreSQL
-# instance is reachable in this build environment. See the README's "honest framing" section.
+# Production profile: real PostgreSQL. Flyway applies src/main/resources/db/migration, then
+# Hibernate validates the entities against it. Every connection setting can be overridden
+# by environment variables (SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME,
+# SPRING_DATASOURCE_PASSWORD); the container and the AWS task set them.
 spring:
   application:
     name: metadata-driven-multi-tenant-platform
@@ -10,13 +10,30 @@ spring:
     username: metaplatform_app
     password: ${METAPLATFORM_DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
   jpa:
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
+
+server:
+  error:
+    include-message: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# seed the synthetic demo tenants and ledger into an empty database (DemoDataLoader)
+platform:
+  demo-data: false
 
 logging:
   level:

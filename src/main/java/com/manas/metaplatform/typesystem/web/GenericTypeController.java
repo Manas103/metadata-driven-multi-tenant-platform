@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,7 +66,10 @@ public class GenericTypeController {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            // name the key column: with a bare RETURN_GENERATED_KEYS the PostgreSQL driver
+            // returns every column of the new row (RETURNING *), and getKey() then throws,
+            // which H2 never showed (DESIGN.md, real PostgreSQL)
+            PreparedStatement ps = connection.prepareStatement(sql, new String[] {"id"});
             for (int i = 0; i < values.size(); i++) {
                 ps.setObject(i + 1, values.get(i));
             }

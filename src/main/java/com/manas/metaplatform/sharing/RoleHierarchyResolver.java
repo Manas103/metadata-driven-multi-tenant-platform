@@ -49,9 +49,11 @@ public final class RoleHierarchyResolver {
             }
         }
 
+        // strictly below the viewer's role: another user holding the viewer's own role is a
+        // peer and is not visible through the hierarchy (the viewer's own records are added
+        // explicitly below). Before this was strict, same-role peers saw each other.
         Set<Long> visibleRoleIds = new LinkedHashSet<>();
-        Deque<Long> queue = new ArrayDeque<>();
-        queue.add(viewer.getRoleId());
+        Deque<Long> queue = new ArrayDeque<>(childRoleIdsByParent.getOrDefault(viewer.getRoleId(), List.of()));
         while (!queue.isEmpty()) {
             long roleId = queue.poll();
             if (!visibleRoleIds.add(roleId)) {
@@ -63,6 +65,7 @@ public final class RoleHierarchyResolver {
         }
 
         List<Long> visibleOwnerUserIds = new ArrayList<>();
+        visibleOwnerUserIds.add(viewer.getId());
         for (AppUser user : appUserRepository.findByTenantId(tenantId)) {
             if (visibleRoleIds.contains(user.getRoleId())) {
                 visibleOwnerUserIds.add(user.getId());

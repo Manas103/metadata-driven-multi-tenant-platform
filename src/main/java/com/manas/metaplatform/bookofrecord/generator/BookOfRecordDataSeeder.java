@@ -66,7 +66,6 @@ public final class BookOfRecordDataSeeder {
 
         Instant now = Instant.parse("2026-11-01T00:00:00Z");
         List<Object[]> rows = new ArrayList<>(accountCount * ROWS_PER_ACCOUNT);
-        long nextId = 1;
         long correctedRowCount = 0;
 
         for (Long accountId : accountIds) {
@@ -98,17 +97,17 @@ public final class BookOfRecordDataSeeder {
                     if (correctionAt.isAfter(now)) {
                         correctionAt = now;
                     }
-                    rows.add(ledgerRow(nextId++, accountId, factId, 1, symbol, effectiveDate, entryType,
+                    rows.add(ledgerRow(accountId, factId, 1, symbol, effectiveDate, entryType,
                             quantity, costBasis, realizedPnl, bookedAt, correctionAt));
 
                     BigDecimal correctedQuantity = quantity.add(randomSignedDecimal(random, 1, 20));
                     BigDecimal correctedCostBasis = costBasis.add(randomSignedDecimal(random, 10, 500));
                     BigDecimal correctedPnl = realizedPnl.add(randomSignedDecimal(random, -200, 200));
-                    rows.add(ledgerRow(nextId++, accountId, factId, 2, symbol, effectiveDate, entryType,
+                    rows.add(ledgerRow(accountId, factId, 2, symbol, effectiveDate, entryType,
                             correctedQuantity, correctedCostBasis, correctedPnl, correctionAt, null));
                     correctedRowCount++;
                 } else {
-                    rows.add(ledgerRow(nextId++, accountId, factId, 1, symbol, effectiveDate, entryType,
+                    rows.add(ledgerRow(accountId, factId, 1, symbol, effectiveDate, entryType,
                             quantity, costBasis, realizedPnl, bookedAt, null));
                 }
             }
@@ -119,22 +118,26 @@ public final class BookOfRecordDataSeeder {
         return new SeedResult(accountIds, rows.size(), correctedRowCount, insertedRows);
     }
 
-    private Object[] ledgerRow(long id, Long accountId, String factId, int version, String symbol,
+    private Object[] ledgerRow(Long accountId, String factId, int version, String symbol,
                                 LocalDate effectiveDate, String entryType, BigDecimal quantity,
                                 BigDecimal costBasis, BigDecimal realizedPnl, Instant asOfFrom, Instant asOfTo) {
-        return new Object[]{id, accountId, factId, version, symbol, java.sql.Date.valueOf(effectiveDate),
+        return new Object[]{accountId, factId, version, symbol, java.sql.Date.valueOf(effectiveDate),
                 entryType, quantity, costBasis, realizedPnl, Timestamp.from(asOfFrom),
                 asOfTo == null ? null : Timestamp.from(asOfTo)};
     }
 
+    // ids come from the table's identity column. The seeder used to assign 1..N itself,
+    // which left the identity sequence at 1: the first live correction after a backfill
+    // (RestatementWriter through JPA) then failed on a duplicate primary key, and so did
+    // a second seed into the same database.
     private int batchInsert(List<Object[]> rows) {
         String sql = """
                 insert into ledger_entries
-                    (id, account_id, fact_id, version, symbol, effective_date, entry_type,
+                    (account_id, fact_id, version, symbol, effective_date, entry_type,
                      quantity, cost_basis, realized_pnl, as_of_from, as_of_to)
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
-        int[] argTypes = {Types.BIGINT, Types.BIGINT, Types.VARCHAR, Types.INTEGER, Types.VARCHAR, Types.DATE,
+        int[] argTypes = {Types.BIGINT, Types.VARCHAR, Types.INTEGER, Types.VARCHAR, Types.DATE,
                 Types.VARCHAR, Types.DECIMAL, Types.DECIMAL, Types.DECIMAL, Types.TIMESTAMP, Types.TIMESTAMP};
 
         int batchSize = 1000;

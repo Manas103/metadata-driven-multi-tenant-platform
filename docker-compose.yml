@@ -1,0 +1,25 @@
+# The service and its database, the way it runs in production (Flyway + validate), with
+# the synthetic demo data loaded on first start. Console at http://localhost:8080
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: metaplatform
+      POSTGRES_USER: metaplatform_app
+      POSTGRES_PASSWORD: local-only
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "metaplatform_app", "-d", "metaplatform"]
+      interval: 2s
+      retries: 30
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/metaplatform
+      SPRING_DATASOURCE_USERNAME: metaplatform_app
+      SPRING_DATASOURCE_PASSWORD: local-only
+      PLATFORM_DEMODATA: "true"
+    ports:
+      - "8080:8080"

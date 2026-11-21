@@ -1,0 +1,4 @@
+database: postgres (PostgreSQL) 16.16 (Testcontainers, Docker Engine 29.1.3 in WSL2)
+JDK: openjdk version "21.0.13.0.3" 2026-10-24
+node: v22.17.1
+command: mvn test -Dspring.profiles.active=pg -Dtest=<Runner> -Dsurefire.excludedGroups=

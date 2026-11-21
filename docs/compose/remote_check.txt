@@ -1,0 +1,8 @@
+target: http://localhost:8080
+tenants: 8 (6 metadata tenants with the shared objects)
+cross-tenant probes: 500, foreign rows returned: 0
+query latency, client round trip (n=500): p50 3.4 ms, p99 6.0 ms
+query latency, server elapsedMs (n=500): p50 1.7 ms, p99 3.4 ms
+metadata write path (new object, field added after a record, read back): ok
+ledger correction (versions 2 -> 3, past belief unchanged, current shows it): ok
+RESULT: all checks passed

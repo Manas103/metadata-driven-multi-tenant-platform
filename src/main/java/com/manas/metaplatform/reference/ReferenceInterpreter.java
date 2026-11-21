@@ -195,7 +195,9 @@ public final class ReferenceInterpreter {
 
     private boolean ownerRoleReportsUpToViewerRole(Long ownerRoleId, long viewerRoleId,
                                                      Map<Long, Long> parentRoleIdByRoleId) {
-        Long current = ownerRoleId;
+        // start one hop above the owner's role: an owner in the viewer's own role is a peer,
+        // not a subordinate (ownership itself is checked by the caller)
+        Long current = ownerRoleId == null ? null : parentRoleIdByRoleId.get(ownerRoleId);
         int guard = 0; // cycle guard; the role graph is a tree, but never trust that blindly
         while (current != null && guard++ < 1000) {
             if (current == viewerRoleId) {

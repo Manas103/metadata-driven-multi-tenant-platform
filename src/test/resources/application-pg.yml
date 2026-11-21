@@ -1,0 +1,13 @@
+# The same tests and benchmarks against a real PostgreSQL 16, started in Docker by
+# Testcontainers' JDBC driver and shared by every Spring context in the run (TC_DAEMON).
+# Activate with -Dspring.profiles.active=pg
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:16-alpine:///metaplatform?TC_DAEMON=true
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    username: test
+    password: test
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
